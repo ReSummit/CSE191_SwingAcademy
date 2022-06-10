@@ -5,24 +5,41 @@ using UnityEngine;
 public class SwordControl : MonoBehaviour
 {
     [SerializeField] GameObject blade;
-    Rigidbody brb;
-    Transform tf;
-    Vector3 lastPos, velocity;
+    Rigidbody rb;
+    Valve.VR.SteamVR_Behaviour_Pose controller;
+    Vector3 lastPos, velocity, rot;
+    float energyReserve = 0.0f;
 
     // Start is called before the first frame update
     void Start()
     {
-        tf = transform;
-        brb = blade.GetComponent<Rigidbody>();
+        rb = this.GetComponent<Rigidbody>();
+        controller = this.GetComponent<Valve.VR.SteamVR_Behaviour_Pose>();
     }
 
     // Update is called once per frame
     void Update()
     {
         // Get controller velocity
-        velocity = new Vector3(transform.position.x - lastPos.x, transform.position.y - lastPos.y, transform.position.z - lastPos.z);
-        velocity = new Vector3(0.2f, velocity.magnitude * 20, 0.2f);
-        blade.transform.localScale = velocity;
-        lastPos = transform.position;
+        velocity = controller.GetVelocity();
+        rot = controller.GetAngularVelocity();
+
+        if ( velocity.magnitude > 0.001 || rot.magnitude > 0.01 )
+        {
+            float vel = velocity.magnitude + rot.magnitude;
+            float end = 0.1f + Mathf.Pow(1, vel);
+            velocity = new Vector3(0.1f, end, 0.1f);
+            blade.transform.localScale = velocity;
+            blade.transform.localPosition = new Vector3(0, Mathf.Sin(Mathf.PI / 4) * end, Mathf.Cos(Mathf.PI / 4) * end);
+            lastPos = transform.position;
+        }
+        else
+        {
+            velocity = new Vector3(0.1f, 0.15f, 0.1f);
+            blade.transform.localScale = velocity;
+            blade.transform.localPosition = new Vector3(0, Mathf.Sin(Mathf.PI / 4) * 0.15f, Mathf.Cos(Mathf.PI / 4) * 0.1f);
+            lastPos = transform.position;
+        }
+        
     }
 }
